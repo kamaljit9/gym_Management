@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Trainer Control Panel</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', sans-serif;
+            background-color: #f4f6f8;
+        }
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+        .sidebar {
+            width: 250px;
+            background-color: #343a40;
+            color: white;
+            padding: 2rem 1rem;
+            display: flex;
+    flex-direction: column;
+    height: 100vh;
+        }
+        .sidebar h2 {
+            color: #fff;
+            text-align: center;
+        }
+        .sidebar ul {
+            list-style: none;
+            padding: 0;
+            margin-top: 2rem;
+        }
+        .sidebar ul li {
+            margin: 1rem 0;
+            font-size: 1rem;
+            cursor: pointer;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            transition: background-color 0.2s;
+        }
+        .sidebar ul li:hover {
+            background-color: #495057;
+        }
+        .main-content {
+            flex: 1;
+            padding: 2rem;
+            overflow-y: auto;
+        }
+        h1 {
+            text-align: center;
+            color: #343a40;
+        }
+        .client-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            justify-content: flex-start;
+            margin-top: 2rem;
+        }
+        .client-card {
+            background-color: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            padding: 1.5rem;
+            width: 320px;
+        }
+        .client-card h3 {
+            margin-top: 0;
+            color: #212529;
+        }
+        .client-card small {
+            color: #6c757d;
+        }
+        label {
+            font-weight: 500;
+            display: block;
+            margin-top: 10px;
+        }
+        input[type="text"],
+        textarea {
+            width: 100%;
+            padding: 8px;
+            margin-top: 4px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        button {
+            margin-top: 15px;
+            padding: 10px 20px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #218838;
+        }
+        .message {
+            margin-top: 10px;
+            font-weight: bold;
+        }
+        .no-clients {
+            text-align: center;
+            color: #999;
+            margin-top: 3rem;
+        }
+
+        /* Controls for search and sort */
+        .controls {
+            margin-bottom: 1.5rem;
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .controls input[type="text"] {
+            padding: 8px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            width: 250px;
+            font-size: 14px;
+        }
+        .controls button {
+            padding: 8px 16px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-top: 0;
+        }
+        .controls button:hover {
+            background-color: #0056b3;
+        }
+
+        .logout-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 30px;
+    background-color: white;
+    color: #343a40; /* Dark text */
+    font-weight: 700;
+    font-size: 1.25rem; /* Bada font size */
+    border-radius: 40px;
+    text-decoration: none;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    transition: background-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
+    cursor: pointer;
+    border: 2px solid #343a40;
+    margin-top: auto;
+}
+
+.logout-link i {
+    font-size: 1.4rem;
+}
+
+.logout-link:hover {
+    background-color: #343a40;
+    color: white;
+    box-shadow: 0 6px 15px rgba(52,58,64,0.6);
+    text-decoration: none;
+}
+
+
+
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <h2><i class="fas fa-dumbbell"></i> Trainer Control Panel</h2>
+        <ul>
+            
+            <a href="{{ url_for('logout') }}" class="nav-link logout-link">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </a>
+            
+        </ul>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <h1><i class="fas fa-user-cog"></i> Manage Clients</h1>
+
+        {% if clients %}
+        <div class="controls">
+            <input type="text" id="searchInput" placeholder="Search client by name..." />
+            <button id="sortAsc">Sort A-Z</button>
+            <button id="sortDesc">Sort Z-A</button>
+        </div>
+
+        <div class="client-list" id="clientList">
+            {% for client in clients %}
+            <div class="client-card" data-name="{{ client.name | lower }}">
+                <h3>{{ client.name }}</h3>
+                <small>{{ client.email }}</small><br><br>
+                <em>Goal: {{ client.goal or "Not specified" }}</em>
+
+                <form class="assign-plan-form" style="margin-top: 1rem;">
+                    <input type="hidden" name="member_id" value="{{ client.id }}" />
+                    <label>Plan Title:</label>
+                    <input type="text" name="title" required />
+                    <label>Description:</label>
+                    <textarea name="description" rows="3" required></textarea>
+                    <button type="submit">Assign Plan</button>
+                </form>
+                <div class="message"></div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+            <p class="no-clients">No clients found.</p>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+    // Prepare client data array from DOM on page load
+    let clientData = [];
+    const clientListDiv = document.getElementById('clientList');
+    
+    function loadClients() {
+        clientData = [];
+        document.querySelectorAll('.client-card').forEach(card => {
+            clientData.push({
+                name: card.querySelector('h3').innerText,
+                email: card.querySelector('small').innerText,
+                goal: card.querySelector('em').innerText.replace('Goal: ', ''),
+                id: card.querySelector('input[name="member_id"]').value,
+            });
+        });
+    }
+
+    function renderClients(clients) {
+        clientListDiv.innerHTML = '';
+        if(clients.length === 0) {
+            clientListDiv.innerHTML = '<p class="no-clients">No clients found.</p>';
+            return;
+        }
+        clients.forEach(client => {
+            clientListDiv.innerHTML += `
+                <div class="client-card" data-name="${client.name.toLowerCase()}">
+                    <h3>${client.name}</h3>
+                    <small>${client.email}</small><br><br>
+                    <em>Goal: ${client.goal || "Not specified"}</em>
+                    <form class="assign-plan-form" style="margin-top: 1rem;">
+                        <input type="hidden" name="member_id" value="${client.id}">
+                        <label>Plan Title:</label>
+                        <input type="text" name="title" required>
+                        <label>Description:</label>
+                        <textarea name="description" rows="3" required></textarea>
+                        <button type="submit">Assign Plan</button>
+                    </form>
+                    <div class="message"></div>
+                </div>
+            `;
+        });
+        attachFormListeners();
+    }
+
+    // Bubble Sort (ascending or descending)
+    function bubbleSort(arr, ascending = true) {
+        let n = arr.length;
+        for(let i = 0; i < n-1; i++) {
+            for(let j = 0; j < n-i-1; j++) {
+                if(ascending) {
+                    if(arr[j].name.toLowerCase() > arr[j+1].name.toLowerCase()) {
+                        [arr[j], arr[j+1]] = [arr[j+1], arr[j]];
+                    }
+                } else {
+                    if(arr[j].name.toLowerCase() < arr[j+1].name.toLowerCase()) {
+                        [arr[j], arr[j+1]] = [arr[j+1], arr[j]];
+                    }
+                }
+            }
+        }
+        return arr;
+    }
+
+    // Binary Search (client names sorted ascending)
+    // Returns index if found, else -1
+    function binarySearch(arr, target) {
+        let low = 0;
+        let high = arr.length - 1;
+        target = target.toLowerCase();
+
+        while(low <= high) {
+            let mid = Math.floor((low + high) / 2);
+            let midName = arr[mid].name.toLowerCase();
+
+            if(midName === target) {
+                return mid;
+            } else if(midName < target) {
+                low = mid + 1;
+            } else {
+                high = mid - 1;
+            }
+        }
+        return -1;
+    }
+
+    // Filter clients by name containing search term (partial match)
+    function filterClients(searchTerm) {
+        searchTerm = searchTerm.trim().toLowerCase();
+        if(searchTerm === '') {
+            renderClients(clientData);
+            return;
+        }
+
+        // For partial match use filter, binary search only for exact match:
+        const filtered = clientData.filter(c => c.name.toLowerCase().includes(searchTerm));
+        renderClients(filtered);
+    }
+
+    // Attach submit event listeners to forms after rendering clients
+    function attachFormListeners() {
+        document.querySelectorAll('.assign-plan-form').forEach(form => {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+
+                const formData = new FormData(form);
+                const data = {
+                    member_id: formData.get('member_id'),
+                    title: formData.get('title'),
+                    description: formData.get('description')
+                };
+
+                fetch('/api/assign_plan', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                })
+                .then(res => res.json())
+                .then(result => {
+                    const msgDiv = form.nextElementSibling;
+                    msgDiv.innerText = result.message;
+                    msgDiv.style.color = result.success ? 'green' : 'red';
+                });
+            });
+        });
+    }
+
+    // Initial load
+    loadClients();
+
+    // Search input listener
+    document.getElementById('searchInput').addEventListener('input', (e) => {
+        filterClients(e.target.value);
+    });
+
+    // Sort buttons
+    document.getElementById('sortAsc').addEventListener('click', () => {
+        const sorted = bubbleSort([...clientData], true);
+        clientData = sorted;
+        renderClients(sorted);
+    });
+    document.getElementById('sortDesc').addEventListener('click', () => {
+        const sorted = bubbleSort([...clientData], false);
+        clientData = sorted;
+        renderClients(sorted);
+    });
+
+    // Attach form listeners for initial render
+    attachFormListeners();
+</script>
+
+</body>
+</html>
